@@ -12,14 +12,16 @@ library(shinyjs)
 library(htmltools)
 source("jscode.R")
 
-# Define UI for application that draws a histogram
+# Define UI for application
 ui <- fluidPage(
 
   #Use JS
   useShinyjs(),
+  
   #Load functions from jscode
   extendShinyjs(text = jscode,
                 functions = c("cert","sendBtn")),
+  
   #UI
   titlePanel("Reprex"),
   actionButton("cert","Sign In"),
@@ -41,13 +43,15 @@ ui <- fluidPage(
 
 )
 
-# Define server logic required to draw a histogram
+# Define server logic
 server <- function(input, output, session) {
 
   #Observe action button for sign-in
   observeEvent(input$cert, {
+    
     #cert function from jscode
     js$cert()
+    
   })
 
   #Observe action button for sendBtn
@@ -60,12 +64,16 @@ server <- function(input, output, session) {
         value= input$value,
         data= input$data
       )
+    
     #Send transaction to JS
     session$sendCustomMessage(type='myCallbackHandler', jsonlite::toJSON(df))
+    
     #Send Comments to JS
     session$sendCustomMessage(type='myCallbackHandler_comments', "Reprex")
+    
     # Fire Wallet
     js$sendBtn()
+    
   })
 
 }

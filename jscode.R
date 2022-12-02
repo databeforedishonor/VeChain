@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
       .request()
       .then((cert) => {
         address = cert.annex.signer
+        Shiny.setInputValue('r_address',address);
       })
       .catch((err) => {
         console.log('error:' + err.message)

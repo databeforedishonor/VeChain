@@ -10,25 +10,39 @@
 library(shiny)
 library(shinyjs)
 library(htmltools)
+library(tidyverse)
+library(httr2)
 source("jscode.R")
 
-# Define UI for application
+# Function to get Tx Receipt
+confirmTxID<-function(txid){
+
+  request(paste0("https://node.vechain.energy/transactions/",txid,"/receipt")) %>%
+    req_method("GET") %>%
+    req_perform() %>%
+    resp_body_json(simplifyVector = T) %>%
+    pluck("reverted")
+
+}
+
+# Define UI for application that draws a histogram
 ui <- fluidPage(
 
   #Use JS
   useShinyjs(),
-
   #Load functions from jscode
   extendShinyjs(text = jscode,
                 functions = c("cert","sendBtn")),
-
   #UI
   titlePanel("Reprex"),
   actionButton("cert","Sign In"),
+  textOutput("user_address"),
   textInput("to","To","0xe0ab6916048ee208154bd76f1343d84b726fa62a"),
   textInput("value","Value","0"),
   textInput("data","Data","0x06fdde03"),
   actionButton("sendBtn","Send Transaction"),
+  textOutput("tx_receipt"),
+
 
   #Add Connex Dependency
   htmltools::htmlDependency(
@@ -43,17 +57,23 @@ ui <- fluidPage(
 
 )
 
-# Define server logic
+# Define server logic required to draw a histogram
 server <- function(input, output, session) {
 
   #Observe action button for sign-in
   observeEvent(input$cert, {
-
     #cert function from jscode
     js$cert('Please identify yourself')
+
   })
 
-  #Observe action button for sendBtn
+  # Get user address from JS
+  observeEvent(input$r_address, {
+
+    output$user_address<-renderText(paste0("Signed as ", input$r_address))
+   })
+
+  
   observeEvent(input$sendBtn,{
 
     #Build transaction
@@ -67,6 +87,24 @@ server <- function(input, output, session) {
 
     # send transaction
     js$sendBtn(jsonlite::toJSON(df))
+  })
+
+# Loop to get Tx Receipt when no longer NULL or quit after time limit
+  observeEvent(input$r_result,{
+
+    receipt<-NULL
+    i=0
+
+      while((is.null(receipt)) && (i<20)){
+        
+        Sys.sleep(1)
+        receipt<- confirmTxID(input$r_result$txid)
+        i=i+1
+       
+      }
+
+    output$tx_receipt<-renderText(input$r_result$txid)
+
   })
 
 }

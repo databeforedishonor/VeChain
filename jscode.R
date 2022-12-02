@@ -10,57 +10,34 @@ document.addEventListener('DOMContentLoaded', function () {
     network: 'main'
   })
 
-  var address = '';
+  let address = '';
 
-  shinyjs.cert = function () {
+  shinyjs.cert = function ([reason = null]) {
     connex.vendor.sign('cert', {
       purpose: 'agreement',
       payload: {
         type: 'text',
-        content: 'cert'
+        content: reason || 'Identification'
       }
     })
       .request()
-      .then((r) => {
-        address = r.annex.signer
-        var userAddress = address.toLowerCase();
-        document.getElementById('cert').innerText = 'Signed In';
-        Shiny.setInputValue('r_address',address);
+      .then((cert) => {
+        address = cert.annex.signer
       })
-      .catch((e) => console.log('error:' + e.message));
+      .catch((err) => {
+        console.log('error:' + err.message)
+        address = ''
+      })
+      .finally(() => {
+        document.getElementById('cert').innerText = address ? `Signed as ${address}` : 'Sign In'
+      })
   };
 
-  // Set blank global variable for Shiny event to hook to
 
-  var clauses = '';
-  var comments = '';
-
-  Shiny.addCustomMessageHandler('myCallbackHandler',
-    function(tx_clauses) {
-      // Set global variable to callback handler from Shiny Element
-      clauses = tx_clauses;
-      console.log(clauses);
-      return clauses;
-  });
-
-  Shiny.addCustomMessageHandler('myCallbackHandler_comments',
-    function(tx_comments) {
-      // Set global variable to callback handler from Shiny Element
-      comments = tx_comments;
-      console.log(comments);
-      return comments;
-  });
-
-
- shinyjs.sendBtn = function () {
-
-    connex.vendor.sign('tx',
-
-      clauses
-
-      )
+ shinyjs.sendBtn = function ([clauses = [], comment = '']) {
+    connex.vendor.sign('tx', clauses)
       .link('https://connex.vecha.in/{txid}') // User will be back to the app by the url https://connex.vecha.in/0xffff....
-      .comment(comments)
+      .comment(comment)
       .request()
       .then(result => {
         console.log(result)

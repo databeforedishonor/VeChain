@@ -17,11 +17,11 @@ ui <- fluidPage(
 
   #Use JS
   useShinyjs(),
-  
+
   #Load functions from jscode
   extendShinyjs(text = jscode,
                 functions = c("cert","sendBtn")),
-  
+
   #UI
   titlePanel("Reprex"),
   actionButton("cert","Sign In"),
@@ -48,10 +48,9 @@ server <- function(input, output, session) {
 
   #Observe action button for sign-in
   observeEvent(input$cert, {
-    
+
     #cert function from jscode
-    js$cert()
-    
+    js$cert('Please identify yourself')
   })
 
   #Observe action button for sendBtn
@@ -62,18 +61,12 @@ server <- function(input, output, session) {
       data.frame(
         to= input$to,
         value= input$value,
-        data= input$data
+        data= input$data,
+        comment= "optional clause comment"
       )
-    
-    #Send transaction to JS
-    session$sendCustomMessage(type='myCallbackHandler', jsonlite::toJSON(df))
-    
-    #Send Comments to JS
-    session$sendCustomMessage(type='myCallbackHandler_comments', "Reprex")
-    
-    # Fire Wallet
-    js$sendBtn()
-    
+
+    # send transaction
+    js$sendBtn(jsonlite::toJSON(df))
   })
 
 }

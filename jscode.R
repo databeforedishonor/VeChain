@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', function () {
     network: 'main'
   })
 
-  let address = '';
 
   shinyjs.cert = function ([reason = null]) {
     connex.vendor.sign('cert', {
@@ -22,27 +21,25 @@ document.addEventListener('DOMContentLoaded', function () {
     })
       .request()
       .then((cert) => {
-        address = cert.annex.signer
-        Shiny.setInputValue('r_address',address);
+        Shiny.setInputValue('r_address', cert.annex.signer);
       })
       .catch((err) => {
         console.log('error:' + err.message)
-        address = ''
-      })
-      .finally(() => {
-        document.getElementById('cert').innerText = address ? `Signed as ${address}` : 'Sign In'
+        Shiny.setInputValue('r_address', '');
       })
   };
 
 
  shinyjs.sendBtn = function ([clauses = [], comment = '']) {
     connex.vendor.sign('tx', clauses)
-      .link('https://connex.vecha.in/{txid}') // User will be back to the app by the url https://connex.vecha.in/0xffff....
       .comment(comment)
       .request()
       .then(result => {
         console.log(result)
         Shiny.setInputValue('r_result',result);
+      })
+      .catch((err) => {
+        console.log('error:' + err.message)
       })
   };
 });
